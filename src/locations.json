@@ -1,0 +1,8 @@
+
+[
+  { "location": {"lat": 26.1448782,"lng":50.0916041}, "title": "Prince Mohammad bin Fahd University" },
+  { "location": {"lat": 26.391877, "lng": 50.189462}, "title": "imam abdulrahman bin faisal university" },
+  { "location": {"lat": 26.304352, "lng": 50.145984}, "title": "King Fahd University of Petroleum and Minerals" },
+  { "location": {"lat": 25.3440685, "lng": 49.5956358}, "title": "King Faisal University" },
+  { "location": {"lat": 26.4053574, "lng": 50.0895281}, "title": "Saudi Electronic university" }
+]
