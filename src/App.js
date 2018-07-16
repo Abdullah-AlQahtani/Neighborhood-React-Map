@@ -9,34 +9,39 @@ let infoWindows = [];
 let markers = [];
 
 class App extends Component {
-      constructor(props) {
-          super(props);
-          this.state = {
-            location: require("./locations.json"),
-            map: {},
-            query: ''
+  constructor(props) {
+    super(props);
+    this.state = {
+      location: require("./locations.json"),
+      map: {},
+      query: '',
+      noError: true
 
-          }
-
-      }
-
-    componentWillReceiveProps({isScriptLoadSucceed}) {
-      window.gm_authFailure = function() {
-      alert('Error: Google maps failed to load!');
     }
-        // insure if the google map script is loaded successfuly
-         if (isScriptLoadSucceed) {
-          //Create the Map
-          const map = new window.google.maps.Map(document.getElementById('map-container'), {
-            zoom: 13,
-            // Location the map
-            center: new window.google.maps.LatLng(26.189041, 49.810356) });
-            this.setState({map:map});
-            places = this.state.location.sort(sortBy('title'))
-        }
-        else {
-          alert('Error: Google maps failed to load!');
+
+  }
+  componentWillReceiveProps({isScriptLoadSucceed}) {
+    window.gm_authFailure = function() {
+      alert('Error: Google maps failed to load!');
+      console.log("Cann't Load Google Map!!!");
+    }
+        // First insure the the google maps script has been loaded.
+      if (isScriptLoadSucceed) { // load finished
+        //Create the Map
+        const map = new window.google.maps.Map(document.getElementById('map-container'), {
+          zoom: 13,
+          // Initial Location
+          center: new window.google.maps.LatLng(26.189041, 49.810356)
+        });
+        this.setState({map:map});
+        this.setState({noError: true})
       }
+      else {
+        //This part to handle the error in loading map
+        this.setState({noError: false})
+        console.log("Cann't Load Google Map!!!");
+      }
+      places = this.state.location.sort(sortBy('title'))
     }
 
 
@@ -49,14 +54,15 @@ class App extends Component {
       let url = ''
 
       // Build the URL
-      return url = `https://api.foursquare.com/v2/venues/search?client_id=${client_id}&client_secret=${client_Secret}&ll=${lat},${lng}&v=${version}&limit=1`
-      }
+      url = `https://api.foursquare.com/v2/venues/search?client_id=${client_id}&client_secret=${client_Secret}&ll=${lat},${lng}&v=${version}&limit=1`
+      return url
+    }
 
       //this method will take the test in search field and update the query
-        updateQuery = (NewQuery) => {
+      updateQuery = (NewQuery) => {
           // if user seraching
-        const {location} = this.state
-        places = location
+          const {location} = this.state
+          places = location
         if (NewQuery) { // If the user is searching
           //filtering
           const equal = new RegExp(escapeRegExp(NewQuery),'i')
@@ -71,13 +77,13 @@ class App extends Component {
         this.MarkersDidUpdate()
       }
 
-    componentDidUpdate() {
-      this.MarkersDidUpdate()
-    }
+      componentDidUpdate() {
+        this.MarkersDidUpdate()
+      }
 
 
-  InfoWindowData(m, fq) {
-    let infoWindow
+      InfoWindowData(m, fq) {
+        let infoWindow
     //request venue information
     let url = this.Foursquarefq(fq)
     fetch(url).then(function(res) {
@@ -86,8 +92,8 @@ class App extends Component {
         // Since requests are successful and we have all the data, start building the InfoWindow
         let content =
         `<div style="width: 200px;">
-        <p tabindex="0">Name: </strong>${JSON.response.venues[0].name}</p>
-        <p tabindex="0"><a href="https://foursquare.com/v/${ JSON.response.venues[0].id }">Read More on Foursquare Website</a>
+        <p tabIndex="0">Name: </strong>${JSON.response.venues[0].name}</p>
+        <p tabIndex="0"><a href="https://foursquare.com/v/${ JSON.response.venues[0].id }">Read More on Foursquare Website</a>
         </div>`
 
         infoWindow = new window.google.maps.InfoWindow({
@@ -100,21 +106,21 @@ class App extends Component {
         infoWindow.open(this, m)
 
 
-    }).catch(function(error) {
+      }).catch(function(error) {
       // when request failed, replace infoWindow data with error message
-      let content = `<p tabindex="0">Sorry data can't be loaded</p>`
+      let content = `<p tabIndex="0">Sorry data can't be loaded</p>`
       infoWindow = new window.google.maps.InfoWindow({
-      content: content
+        content: content
       })
       // InfoWindow save in infoWindows array
       infoWindows.push(infoWindow)
         // Open infoWindow
-      infoWindow.open(this, m)
-      console.log("request to Forsquare was failed")
-    })
-  }
+        infoWindow.open(this, m)
+        console.log("request to Forsquare was failed")
+      })
+    }
 
-  OpenMarkerWhenClick = (c) => {
+    OpenMarkerWhenClick = (c) => {
 
     // searching for markers
     let mto = markers.filter((m) => m.title === c.title)[0]
@@ -142,17 +148,17 @@ class App extends Component {
     let me = this
   //Generating Markers
   places.forEach(function(fq) {
-  let m = new window.google.maps.Marker({
-  title: fq.title,
-  map: me.state.map,
-  position: fq.location,
-  animation: window.google.maps.Animation.DROP
-   })
+    let m = new window.google.maps.Marker({
+      title: fq.title,
+      map: me.state.map,
+      position: fq.location,
+      animation: window.google.maps.Animation.DROP
+    })
 
     //click Events
     m.addListener('click', function() {
       // close infoWindow
-    infoWindows.forEach(function(InfoWindow) {InfoWindow.close()})
+      infoWindows.forEach(function(InfoWindow) {InfoWindow.close()})
     // Add Effect to Markers when click it or select it
     this.setAnimation(window.google.maps.Animation.BOUNCE);
     setTimeout(() => {this.setAnimation(null);}, 200)
@@ -167,47 +173,55 @@ class App extends Component {
   // map bounds
   let bounds = new window.google.maps.LatLngBounds();
   markers.forEach((m) => bounds.extend(m.position))
-  this.state.map.fitBounds(bounds)
-  }
-
-  render() {
-    const {query} = this.state;
-    return (
-      <div>
-      <nav className="nav">
-        <center>
-          <span id="subject" tabIndex='0'>Saudi Arabia - Eastern Province Universities</span>
-          </center>
-            </nav>
-              <div id="container">
-              <div id="map-container" role="application" tabIndex="-1">
-              <div id="map" role="region" aria-label="Eastern Province Universities"></div>
-              </div>
-            <div className='listView'>
-            <input id="textToFilter" className='form-control' type='text'
-            placeholder=' search location ..'
-            value={query}
-            onChange={(e) => this.updateQuery(e.target.value)}
-            role="search"
-            aria-labelledby="Search For a University"
-            tabIndex="1"/>
-            <ul aria-labelledby="list of Universities" tabIndex="1">
-
-          {places.map((p, index)=>
-            <li key={index} tabIndex={index+2}
-            area-labelledby={`View details for ${p.title}`}
-            onClick={() => this.OpenMarkerWhenClick(p)}
-            onKeyPress={(e) => this.OpenMarkerWhenKeyPress(e, p)}>
-      	  {p.title}</li>)}
-            </ul>
-            </div>
-            </div>
-            </div>
-    );
-  }
+  me.state.map.fitBounds(bounds)
 }
 
-// Load Google Map API Key
-  export default scriptLoader(
+render() {
+  const {query} = this.state;
+  return (
+    this.state.noError ? (
+      <div>
+      <nav className="nav">
+      <center>
+      <span id="subject" tabIndex='0'>Saudi Arabia - Eastern Province Universities</span>
+      </center>
+      </nav>
+      <div id="container">
+      <div id="map-container" role="application" tabIndex="-0">
+      <div id="map" role="region" aria-label="Eastern Province Universities"></div>
+      </div>
+      <div className='listView'>
+      <input id="textToFilter" className='form-control' type='text'
+      placeholder=' search location ..'
+      value={query}
+      onChange={(e) => this.updateQuery(e.target.value)}
+      role="search"
+      aria-labelledby="Search For a University"
+      tabIndex="0"/>
+      <ul aria-labelledby="list of Universities" tabIndex="0">
+
+      {places.map((p, index)=>
+        <li key={index} tabIndex={index+2}
+        area-labelledby={p.title}
+        onClick={() => this.OpenMarkerWhenClick(p)}
+        onKeyPress={(e) => this.OpenMarkerWhenKeyPress(e, p)}>
+        {p.title}</li>)}
+        </ul>
+        </div>
+        </div>
+        </div>
+        ) : (
+        <div>
+        <h1>Can not Load Google Map!!!</h1>
+        <h2>Try again</h2>
+        </div>
+        )
+        )
+      }
+    }
+
+
+    // Load Google Map API Key
+    export default scriptLoader(
       [`https://maps.googleapis.com/maps/api/js?key=AIzaSyAD7SP0433vy7OGi67irjeNfbMNbAJCA9s&v=3.exp&libraries=geometry,drawing,places`]
       )(App);
